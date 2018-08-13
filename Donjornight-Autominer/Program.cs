@@ -26,7 +26,7 @@ namespace Donjornight_Autominer
             Console.WriteLine("");
             Console.WriteLine("");
             Console.WriteLine("     DONJORNITE AUTOMINER");
-            Console.WriteLine("     Mine for max profit from Donjor (Haven Protocol team)");
+            Console.WriteLine("     - Donjor (Haven Protocol team)");
             Console.WriteLine("");
             Console.WriteLine("");
             Console.WriteLine("---------------------------------------------------------------------");
@@ -34,8 +34,10 @@ namespace Donjornight_Autominer
             Console.ForegroundColor = ConsoleColor.White;
 
 
+
             //read all the coins!
             string[] coins = File.ReadAllLines("Donjornite-Coins.txt");
+
             foreach (var coin in coins)
             {
                 if (coin.StartsWith("*"))
@@ -74,7 +76,7 @@ namespace Donjornight_Autominer
             System.Timers.Timer aTimer = new System.Timers.Timer();
             aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
             // Set the Interval to 5 seconds.
-            aTimer.Interval = 300000;
+            aTimer.Interval = 60000;
             aTimer.Enabled = true;
 
         }
@@ -105,7 +107,7 @@ namespace Donjornight_Autominer
                 if (Globals.coinAlgoHash[i] == 0)
                 {
                     //Not benchmarked
-
+                    
                     Console.ForegroundColor = ConsoleColor.DarkGreen;
                     Console.WriteLine("");
                     Console.WriteLine("     NOW BENCHMARKING ALGORITHM: " + i);
@@ -114,6 +116,7 @@ namespace Donjornight_Autominer
                     Console.ForegroundColor = ConsoleColor.DarkGray;
 
                     Globals.mostProfitableCoin = coincount;
+                    Thread.Sleep(500);
 
                     //Benchmark
 
@@ -176,34 +179,62 @@ namespace Donjornight_Autominer
                                     }
                                     else
                                     {
+                                        Console.ForegroundColor = ConsoleColor.DarkGray;
                                         output.AppendLine(e.Data);
                                         Console.WriteLine(e.Data);
                                         if (e.Data.ToString().Contains("RPM |"))
                                         {
-                                            var start = e.Data.ToString().IndexOf("RPM |") + 5;
-                                            var end = e.Data.ToString().IndexOf("/s");
-                                            double currentHash = Convert.ToDouble(e.Data.ToString().Substring(start, end - 2 - start));
-
-                                            if (hash == 0 && hashCount != 0)
+                                            if (gpucount < 2)
                                             {
-                                                hash = currentHash;
-                                            }
-                                            else if (hash > 0)
-                                            {
-                                                hash = (hash + currentHash) / 2;
-                                            }
-                                            hashCount++;
+                                                var start = e.Data.ToString().IndexOf("RPM |") + 5;
+                                                var end = e.Data.ToString().IndexOf("/s");
+                                                double currentHash = Convert.ToDouble(e.Data.ToString().Substring(start, end - 2 - start));
 
-                                            Console.WriteLine("");
-                                            Console.ForegroundColor = ConsoleColor.DarkCyan;
-                                            Console.WriteLine("     " + hashCount + "/" + 5 * gpucount + " Captured Hashrates for algo: " + i + " - AVERAGE HASHRATE: " + hash * gpucount + " H/s");
-                                            Console.ForegroundColor = ConsoleColor.DarkGray;
-                                            Console.WriteLine("");
-                                            if (hashCount > 4 * gpucount)
-                                            {
-                                                kill = true;
-                                            }
+                                                if (hash == 0 && hashCount != 0)
+                                                {
+                                                    hash = currentHash * gpucount;
+                                                }
+                                                else if (hash > 0)
+                                                {
+                                                    hash = (hash + currentHash * gpucount) / 2;
+                                                }
+                                                hashCount++;
 
+                                                Console.WriteLine("");
+                                                Console.ForegroundColor = ConsoleColor.DarkCyan;
+                                                Console.WriteLine("     " + hashCount + "/" + 5 * gpucount + " Captured Hashrates for algo: " + i + " - AVERAGE HASHRATE: " + hash * gpucount + " H/s");
+                                                Console.ForegroundColor = ConsoleColor.DarkGray;
+                                                Console.WriteLine("");
+                                                if (hashCount > 4 * gpucount)
+                                                {
+                                                    kill = true;
+                                                }
+                                            }
+                                        }
+                                        else if (e.Data.ToString().Contains("Hash Rate Avg:"))
+                                        {
+                                            if (gpucount > 1)
+                                            {
+
+                                                var start = e.Data.ToString().IndexOf("Hash Rate Avg:") + 15;
+                                                var end = e.Data.ToString().IndexOf("/s");
+                                                hash = Convert.ToDouble(e.Data.ToString().Substring(start, end - 2 - start));
+                                                
+
+                                                Console.WriteLine("");
+                                                Console.ForegroundColor = ConsoleColor.DarkCyan;
+                                                Console.WriteLine("     Captured Hashrates for algo: " + i + " - AVERAGE HASHRATE: " + hash + " H/s");
+                                                Console.ForegroundColor = ConsoleColor.DarkGray;
+                                                Console.WriteLine("");
+
+                                                if (hashCount > 0)
+                                                {
+                                                    kill = true;
+                                                }
+
+                                                hashCount++;
+                                                
+                                            }
                                         }
                                         else if (e.Data.ToString().Contains("Connecting to Pool failed."))
                                         {
@@ -291,6 +322,7 @@ namespace Donjornight_Autominer
         }
         static void Go()
         {
+            Globals.mostProfitableCoinProfit = 0;
             Globals.mostProfitableCoin = -1;
             TimeSpan runtime;
             try
@@ -350,7 +382,6 @@ namespace Donjornight_Autominer
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.White;
 
-
             //determine if we should switch
             //not mining so go.
             if (Globals.currentlyMining == -1)
@@ -398,8 +429,12 @@ namespace Donjornight_Autominer
                 Console.ForegroundColor = ConsoleColor.DarkMagenta;
                 Console.WriteLine("     SWITCHING EARLY > " + Globals.profit[Globals.mostProfitableCoin] / Globals.profit[Globals.currentlyMining] + " % PROFIT!");
                 Console.WriteLine("");
+                Console.WriteLine("     Current Mining Profit: $" + Globals.profit[Globals.currentlyMining] * Globals.coinAlgoHash[Convert.ToInt32(Globals.coinAlgo[Globals.currentlyMining])] / 1000);
+                Console.WriteLine("     Most Profitable Coin Profit: $" + Globals.mostProfitableCoinProfit);
+                Console.WriteLine("");
                 Console.ForegroundColor = ConsoleColor.White;
                 Console.WriteLine("**************************************************************");
+                Console.WriteLine("");
 
 
                 //kill current
@@ -418,9 +453,11 @@ namespace Donjornight_Autominer
                 Console.WriteLine("");
                 Console.ForegroundColor = ConsoleColor.DarkMagenta;
                 Console.WriteLine("     NOT SWITCHING");
-                Console.WriteLine("     Elapsed time: " + runtime.TotalMinutes.ToString() + " Mins");
+                Console.WriteLine("     Elapsed time: " + Math.Round(runtime.TotalMinutes, 1).ToString() + " Mins");
                 Console.WriteLine("");
                 Console.WriteLine("     MINING: " + Globals.coinName[Globals.currentlyMining]);
+                Console.WriteLine("     Current Mining Profit: $" + Globals.profit[Globals.currentlyMining] * Globals.coinAlgoHash[Convert.ToInt32(Globals.coinAlgo[Globals.currentlyMining])] / 1000);
+                Console.WriteLine("     Most Profitable Coin Profit: $" + Globals.mostProfitableCoinProfit);
                 Console.WriteLine("");
                 Console.ForegroundColor = ConsoleColor.White;
                 Console.WriteLine("**************************************************************");
@@ -566,13 +603,17 @@ namespace Donjornight_Autominer
 
             }
 
-            double diff = Math.Round(Convert.ToDouble(Globals.coinAlgoHash[Convert.ToInt32(Globals.coinAlgo[Globals.mostProfitableCoin])] * gpucount * 30),0);
+            double diff = Math.Round(Convert.ToDouble(Globals.coinAlgoHash[Convert.ToInt32(Globals.coinAlgo[Globals.mostProfitableCoin])] * 30),0);
 
+
+            TimeSpan runtime = DateTime.Now - DateTime.Now;
+            
 
             DateTime lastShareTime = DateTime.Now;
             double acceptedShares = 0;
             Console.ForegroundColor = ConsoleColor.DarkGray;
             TimeSpan timeSpan = DateTime.Now - DateTime.Now;
+            double counter = 1;
 
             using (Globals.exeProcess = new Process())
             {
@@ -606,7 +647,23 @@ namespace Donjornight_Autominer
                             }
                             else
                             {
+                                try
+                                {
+                                    runtime = DateTime.Now - Globals.exeProcess.StartTime;
+                                }
+                                catch
+                                {
+                                    runtime = DateTime.Now - DateTime.Now;
+                                }
+
+                                if (runtime.TotalMinutes > counter)
+                                {
+                                    Go();
+                                    counter++;
+                                }
+
                                 //timeSpan = DateTime.Now - lastShareTime;
+                                Console.ForegroundColor = ConsoleColor.DarkGray;
                                 output.AppendLine(e.Data);
                                 Console.WriteLine(e.Data);
                                 if (e.Data.ToString().Contains("Shares:"))
@@ -620,12 +677,13 @@ namespace Donjornight_Autominer
                                         lastShareTime = DateTime.Now;
                                     }
 
+
+
                                     Console.ForegroundColor = ConsoleColor.DarkYellow;
                                     Console.WriteLine("");
-                                    Console.WriteLine("     Detected share submitted");
-                                    Console.WriteLine("     Current Shares:" + currentShares);
-                                    Console.WriteLine("     Accepted Shares:" + acceptedShares);
-                                    Console.WriteLine("     Last Share time:" + lastShareTime);
+                                    Console.WriteLine("     " + e.Data);
+                                    Console.ForegroundColor = ConsoleColor.DarkCyan;
+                                    Console.WriteLine("     Currently Mining: " + Globals.coinName[Globals.currentlyMining] + " \t Total Mining Runtime: " + Math.Round(runtime.TotalMinutes,1) + " mins");
                                     Console.WriteLine("");
                                     Console.ForegroundColor = ConsoleColor.DarkGray;
                                    
@@ -659,29 +717,19 @@ namespace Donjornight_Autominer
                         Globals.exeProcess.BeginOutputReadLine();
                         Globals.exeProcess.BeginErrorReadLine();
 
-                        
-                        //try
-                        //{
-                        //    timeSpan = DateTime.Now - lastShareTime;
-                        //}
-                        //catch
-                        //{
-                        //    timeSpan = DateTime.Now - DateTime.Now;
-                        //}
-
 
                         while (timeSpan.TotalMinutes < 5)
                         {
-                            Thread.Sleep(60000);
+                            //Thread.Sleep(60000);
                             timeSpan = DateTime.Now - lastShareTime;
                         }
 
 
-                        if (timeSpan.TotalMinutes > 5)
+                        if (timeSpan.TotalMinutes > 15)
                         {
                             Console.ForegroundColor = ConsoleColor.DarkRed;
                             Console.WriteLine();
-                            Console.WriteLine("         !!ERROR!! NO SHARES IN 5 MINUTES - Killing app starting again");
+                            Console.WriteLine("         !!ERROR!! NO SHARES IN 15 MINUTES - Killing app starting again");
                             Console.WriteLine();
                             Console.ForegroundColor = ConsoleColor.DarkGray;
                             Globals.exeProcess.Kill();
@@ -689,7 +737,7 @@ namespace Donjornight_Autominer
                             Benchmark();
                             Go();
 
-                        }
+                        }         
 
                         if (Globals.exeProcess.WaitForExit(15) &&
                             outputWaitHandle.WaitOne(120) &&

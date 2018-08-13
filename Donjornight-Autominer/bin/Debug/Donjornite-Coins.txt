@@ -10,7 +10,7 @@
 *7 = CryptoNightXHV-Heavy
 *8 = CryptoNight-Fast
 *
-*Add or remove coins from below. Make sure ports you use for each pool reflect your systems hashrate. 30secs*Hashrate ~ diff ideally. 
+*Add or remove coins from below. Make sure ports you use for each pool reflect your systems hashrate for benchmark. 30secs*Hashrate ~ diff ideally. Diff is set from benched hashrate
 **********************************************
 *Monero, XMR, 1, pool.supportxmr.com:7777, 4Cf2TfMKhCgJ2vsM3HeBUnYe52tXrvv8X1ajjuQEMUQ8iU8kvUzCSsCEacxFhEmeb2JgPpQ5chdyw3UiTfUgapJBhBsgP93ec5y2oNEmFG,
 Loki, LOKI, 2, loki.miner.rocks:5555, LK8CGQ17G9R3ys3Xf33wCeViD2B95jgdpjAhcRsjuheJ784dumXn7g3RPAzedWpFq364jJKYL9dkQ8mY66sZG9BiCvqYpTDcUyN4MrDtia,
