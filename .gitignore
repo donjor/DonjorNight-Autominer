@@ -3,3 +3,5 @@
 ################################################################################
 
 /.vs/Donjornight-Autominer/v15/Server/sqlite3
+/Donjornight-Autominer/bin/Debug/switch-radeon-gpu.exe
+/Donjornight-Autominer/bin/Debug/restart.bat

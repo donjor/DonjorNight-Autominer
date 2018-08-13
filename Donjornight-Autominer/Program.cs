@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Management;
 using System.Timers;
+using System.Threading;
 
 namespace Donjornight_Autominer
 {
@@ -18,6 +19,57 @@ namespace Donjornight_Autominer
     {
         static void Main(string[] args)
         {
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Console.WriteLine("");
+            Console.WriteLine("");
+            Console.WriteLine("---------------------------------------------------------------------");
+            Console.WriteLine("");
+            Console.WriteLine("");
+            Console.WriteLine("     DONJORNITE AUTOMINER");
+            Console.WriteLine("     Mine for max profit from Donjor (Haven Protocol team)");
+            Console.WriteLine("");
+            Console.WriteLine("");
+            Console.WriteLine("---------------------------------------------------------------------");
+            Console.WriteLine("");
+            Console.ForegroundColor = ConsoleColor.White;
+
+
+            //read all the coins!
+            string[] coins = File.ReadAllLines("Donjornite-Coins.txt");
+            foreach (var coin in coins)
+            {
+                if (coin.StartsWith("*"))
+                {
+                    //ignore
+                }
+                else
+                {
+                    //its a coin
+                    //don't judge me for this lmao
+                    var comma = 0;
+                    //resize the array
+                    Array.Resize(ref Globals.coinName, Globals.coinName.Length + 1);
+                    Globals.coinName[Globals.coinName.Length - 1] = coin.Substring(comma, coin.IndexOf(',', comma) - comma);
+
+                    comma = coin.IndexOf(',', comma + 1);
+                    Array.Resize(ref Globals.coinTicker, Globals.coinTicker.Length + 1);
+                    Globals.coinTicker[Globals.coinTicker.Length - 1] = coin.Substring(comma + 2, coin.IndexOf(',', comma + 1) - comma - 2);
+
+                    comma = coin.IndexOf(',', comma + 1);
+                    Array.Resize(ref Globals.coinAlgo, Globals.coinAlgo.Length + 1);
+                    Globals.coinAlgo[Globals.coinAlgo.Length - 1] = coin.Substring(comma + 2, coin.IndexOf(',', comma + 1) - comma - 2);
+
+                    comma = coin.IndexOf(',', comma + 1);
+                    Array.Resize(ref Globals.coinPool, Globals.coinPool.Length + 1);
+                    Globals.coinPool[Globals.coinPool.Length - 1] = coin.Substring(comma + 2, coin.IndexOf(',', comma + 1) - comma - 2);
+
+                    comma = coin.IndexOf(',', comma + 1);
+                    Array.Resize(ref Globals.coinAddress, Globals.coinAddress.Length + 1);
+                    Globals.coinAddress[Globals.coinAddress.Length - 1] = coin.Substring(comma + 2, coin.IndexOf(',', comma + 1) - comma - 2);
+
+                };
+            }
+            Benchmark();
             Go();
             System.Timers.Timer aTimer = new System.Timers.Timer();
             aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
@@ -25,8 +77,211 @@ namespace Donjornight_Autominer
             aTimer.Interval = 300000;
             aTimer.Enabled = true;
 
-            Console.WriteLine("Press \'z\' to quit");
-            while (Console.Read() != 'z') ;
+        }
+
+        static void Benchmark()
+        {
+
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("**************************************************************");
+            Console.WriteLine("");
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
+            Console.WriteLine("     BENCHMARKING RELEVANT MINING ALGORITHMS");
+            Console.WriteLine("");
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("**************************************************************");
+
+            //Go through each algo
+            //Array.Resize(ref Globals.coinAlgoHash, Globals.coinName.Length);
+
+            var coincount = 0;
+
+            foreach (var algo in Globals.coinAlgo)
+            {
+                int i = Convert.ToInt16(algo);
+
+
+
+                if (Globals.coinAlgoHash[i] == 0)
+                {
+                    //Not benchmarked
+
+                    Console.ForegroundColor = ConsoleColor.DarkGreen;
+                    Console.WriteLine("");
+                    Console.WriteLine("     NOW BENCHMARKING ALGORITHM: " + i);
+                    Console.WriteLine("");
+
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+
+                    Globals.mostProfitableCoin = coincount;
+
+                    //Benchmark
+
+                    //Get GPU count
+                    //Globals.currentlyMining = Globals.mostProfitableCoin;
+                    int gpucount = 0;
+                    string gpu = "";
+                    ManagementObjectSearcher objvide = new ManagementObjectSearcher("select * from Win32_VideoController");
+                    foreach (ManagementObject obj in objvide.Get())
+                    {
+                        var gpuname = obj["VideoProcessor"];
+                        if (obj["VideoProcessor"].ToString().Contains("Intel"))
+                        {
+                            //intel = not gpu
+                        }
+                        else
+                        {
+                            gpu = gpu + gpucount + ",";
+                            gpucount++;
+
+                        }
+
+                    }
+
+
+                    // Start process.
+                    Boolean kill = false;
+                    double hash = 0;
+                    var hashCount = 0;
+
+                    using (Process process = new Process())
+                    {
+                        process.StartInfo.FileName = "cast_xmr-vega.exe"; ;
+                        process.StartInfo.Arguments = "--algo=" + Globals.coinAlgo[Globals.mostProfitableCoin] + " -S " + Globals.coinPool[Globals.mostProfitableCoin] + " -u " + Globals.coinAddress[Globals.mostProfitableCoin] + " -G " + gpu;
+                        process.StartInfo.UseShellExecute = false;
+                        process.StartInfo.RedirectStandardOutput = true;
+                        process.StartInfo.RedirectStandardError = true;
+                        process.Start();
+
+                        StringBuilder output = new StringBuilder();
+                        StringBuilder error = new StringBuilder();
+
+                        using (AutoResetEvent outputWaitHandle = new AutoResetEvent(false))
+                        using (AutoResetEvent errorWaitHandle = new AutoResetEvent(false))
+                        {
+                            try
+                            {
+                                process.OutputDataReceived += (sender, e) =>
+                                {
+                                    if (e.Data == null)
+                                    {
+                                        try
+                                        {
+                                            outputWaitHandle.Set();
+                                        }
+                                        catch
+                                        {
+
+                                        }
+                                    }
+                                    else
+                                    {
+                                        output.AppendLine(e.Data);
+                                        Console.WriteLine(e.Data);
+                                        if (e.Data.ToString().Contains("RPM |"))
+                                        {
+                                            var start = e.Data.ToString().IndexOf("RPM |") + 5;
+                                            var end = e.Data.ToString().IndexOf("/s");
+                                            double currentHash = Convert.ToDouble(e.Data.ToString().Substring(start, end - 2 - start));
+
+                                            if (hash == 0 && hashCount != 0)
+                                            {
+                                                hash = currentHash;
+                                            }
+                                            else if (hash > 0)
+                                            {
+                                                hash = (hash + currentHash) / 2;
+                                            }
+                                            hashCount++;
+
+                                            Console.WriteLine("");
+                                            Console.ForegroundColor = ConsoleColor.DarkCyan;
+                                            Console.WriteLine("     " + hashCount + "/" + 5 * gpucount + " Captured Hashrates for algo: " + i + " - AVERAGE HASHRATE: " + hash * gpucount + " H/s");
+                                            Console.ForegroundColor = ConsoleColor.DarkGray;
+                                            Console.WriteLine("");
+                                            if (hashCount > 4 * gpucount)
+                                            {
+                                                kill = true;
+                                            }
+
+                                        }
+                                        else if (e.Data.ToString().Contains("Connecting to Pool failed."))
+                                        {
+                                            kill = true;
+                                        }
+                                    }
+                                };
+                                process.ErrorDataReceived += (sender, e) =>
+                                {
+                                    try
+                                    {
+                                        if (e.Data == null)
+                                        {
+
+                                            errorWaitHandle.Set();
+                                        }
+                                        else
+                                        {
+                                            error.AppendLine(e.Data);
+                                        }
+                                    }
+                                    catch
+                                    {
+
+                                    }
+
+                                };
+
+
+                                process.BeginOutputReadLine();
+                                process.BeginErrorReadLine();
+
+
+                                while (kill == false)
+                                {
+                                    Thread.Sleep(2000);
+                                }
+
+                                if (kill == true)
+                                {
+                                    process.Kill();
+                                }
+
+                                if (process.WaitForExit(15) &&
+                                    outputWaitHandle.WaitOne(120) &&
+                                    errorWaitHandle.WaitOne(120))
+                                {
+                                    // Process completed. Check process.ExitCode here.
+                                }
+                                else
+                                {
+                                    // Timed out.
+                                }
+                            }
+
+                            catch
+                            {
+
+                            }
+                        }
+
+                    }
+
+                    if (Convert.ToDouble(hash) > 0)
+                    {
+                        Globals.coinAlgoHash[i] = hash;
+                    }
+
+
+
+
+
+                }
+                coincount++;
+            }
+
+
+
         }
 
         // Specify what you want to happen when the Elapsed event is raised.
@@ -36,6 +291,7 @@ namespace Donjornight_Autominer
         }
         static void Go()
         {
+            Globals.mostProfitableCoin = -1;
             TimeSpan runtime;
             try
             {
@@ -45,11 +301,14 @@ namespace Donjornight_Autominer
             {
                 runtime = DateTime.Now - DateTime.Now;
             }
+
             GetCurrentProfit();
+
             int coinCount = 0;
             //determine most profitable coin
+            Console.WriteLine("");
 
-            foreach (var coinProfit in Globals.profit)
+            foreach (double coinProfitPerKH in Globals.profit)
             {
                 if (Globals.mostProfitableCoin == -1)
                 {
@@ -57,61 +316,91 @@ namespace Donjornight_Autominer
                 }
                 try
                 {
-                    if (coinProfit > Globals.profit[Globals.mostProfitableCoin])
+                    double coinProfit = 0;
+                    int algo = Convert.ToInt32(Globals.coinAlgo[coinCount]);
+                    double algoHash = Globals.coinAlgoHash[algo];
+
+                    coinProfit = (coinProfitPerKH * algoHash) / 1000;
+
+                    //string print = "     " + Globals.coinName[coinCount] + " Daily Profit: $" + coinProfit;
+
+                    Console.WriteLine("     " + Globals.coinName[coinCount] + " Daily Profit: \t \t $" + Math.Round(coinProfit, 2) + " \t (" + algoHash + " H/s)");
+
+                    int MPC = Globals.mostProfitableCoin;
+
+                    if (coinProfit > Globals.mostProfitableCoinProfit)
                     {
                         Globals.mostProfitableCoin = coinCount;
+                        Globals.mostProfitableCoinProfit = coinProfit;
                     }
 
                 }
                 catch
                 {
-                    Console.WriteLine("error getting profit for " + Globals.coins[coinCount]);
+                    Console.WriteLine("     !ERROR!  - Can't get profit for " + Globals.coinName[coinCount]);
                 }
                 coinCount++;
             }
 
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
             //print out nonsense
-            coinCount = 0;
             Console.WriteLine();
-            foreach (var coin in Globals.coins)
-            {
-                Console.WriteLine(coin + " profit: " + Globals.profit[coinCount]);
-                coinCount++;
-
-            }
+            Console.WriteLine("     Most Profitable Coin: \t \t " + Globals.coinName[Globals.mostProfitableCoin]);
+            Console.WriteLine("     Daily Profit: \t \t \t $" + Globals.mostProfitableCoinProfit);
             Console.WriteLine();
-            Console.WriteLine("Most Profitable Coin: " + Globals.coins[Globals.mostProfitableCoin]);
-            Console.WriteLine("Profit: " + Globals.profit[Globals.mostProfitableCoin]);
-
+            Console.ForegroundColor = ConsoleColor.White;
 
 
             //determine if we should switch
             //not mining so go.
             if (Globals.currentlyMining == -1)
             {
-                Console.WriteLine();
-                Console.WriteLine("NOT CURRENTLY MINING SO MINING START");
-                Console.WriteLine();
+
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("**************************************************************");
+                Console.WriteLine("");
+                Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                Console.WriteLine("     NOT CURRENTLY MINING SO MINING START");
+                Console.WriteLine("");
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("**************************************************************");
+
                 //start mining
                 LaunchCommandLineApp();
             }
             //if not mining the most profitable coin
             else if (Globals.currentlyMining != Globals.mostProfitableCoin && runtime.TotalMinutes > 60)
             {
-                Console.WriteLine();
-                Console.WriteLine("NEW COIN MORE PROFITABLE - SWITCHING");
-                Console.WriteLine();
+
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("**************************************************************");
+                Console.WriteLine("");
+                Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                Console.WriteLine("     NEW COIN MORE PROFITABLE - SWITCHING");
+                Console.WriteLine("");
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("**************************************************************");
+
 
                 //kill current
                 Globals.exeProcess.Kill();
                 //switch
                 LaunchCommandLineApp();
             }
-            else if (Globals.profit[Globals.currentlyMining] * 1.2 < Globals.profit[Globals.mostProfitableCoin])
+
+            //int currentAlgo = Convert.ToInt32(Globals.coinAlgo[Globals.currentlyMining]);
+
+
+            else if ((Globals.profit[Globals.currentlyMining] * Globals.coinAlgoHash[Convert.ToInt32(Globals.coinAlgo[Globals.currentlyMining])]) / 1000 * 1.2 < Globals.mostProfitableCoinProfit)
             {
-                Console.WriteLine();
-                Console.WriteLine("SWITCHING EARLY > " + Globals.profit[Globals.mostProfitableCoin] / Globals.profit[Globals.currentlyMining] + " % PROFIT!");
-                Console.WriteLine();
+                Console.WriteLine("**************************************************************");
+                Console.WriteLine("");
+                Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                Console.WriteLine("     SWITCHING EARLY > " + Globals.profit[Globals.mostProfitableCoin] / Globals.profit[Globals.currentlyMining] + " % PROFIT!");
+                Console.WriteLine("");
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("**************************************************************");
+
 
                 //kill current
                 try
@@ -124,31 +413,18 @@ namespace Donjornight_Autominer
             }
             else
             {
-                Console.WriteLine("NOT SWITCHING");
-                Console.WriteLine("Elapsed time: " + runtime.TotalMinutes.ToString() + " Mins");
 
-                Console.WriteLine("MINING: " + Globals.coins[Globals.currentlyMining]);
-                Console.WriteLine("MINING: " + Globals.coins[Globals.currentlyMining]);
-                Console.WriteLine("MINING: " + Globals.coins[Globals.currentlyMining]);
-                Console.WriteLine("MINING: " + Globals.coins[Globals.currentlyMining]);
+                Console.WriteLine("**************************************************************");
+                Console.WriteLine("");
+                Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                Console.WriteLine("     NOT SWITCHING");
+                Console.WriteLine("     Elapsed time: " + runtime.TotalMinutes.ToString() + " Mins");
+                Console.WriteLine("");
+                Console.WriteLine("     MINING: " + Globals.coinName[Globals.currentlyMining]);
+                Console.WriteLine("");
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("**************************************************************");
 
-                //Console.WriteLine("**test every coin**");
-                //Console.WriteLine("**test every coin**");
-                //Console.WriteLine("**test every coin**");
-                //Console.WriteLine("**test every coin**");
-                //Console.WriteLine("**test every coin**");
-                //Console.WriteLine("**test every coin**");
-                ////test every coin
-                //Globals.mostProfitableCoin = 7;
-                //Globals.counter++;
-                ////kill current
-                //try
-                //{
-                //    Globals.exeProcess.Kill();
-                //}
-                //catch { }
-                ////switch
-                //LaunchCommandLineApp();
             }
 
 
@@ -159,65 +435,22 @@ namespace Donjornight_Autominer
         {
             public static int currentlyMining = -1;
             public static int mostProfitableCoin = -1;
-            public static double[] profit = new double[8];
-            public static string[] coins = new string[]
-                {
-                    "DERO",
-                    "SUMO",
-                    "XTL",
-                    "LOKI",
-                    "XRN",
-                    "RYO",
-                    "XHV",
-                    "MSR"
-                };
-            public static int[] algo = new int[]
-                {
-                    0,
-                    0,
-                    6,
-                    2,
-                    2,
-                    2,
-                    7,
-                    8
-                };
-            public static string[] pool = new string[]
-                {
-                    "dero.miner.rocks:5555",
-                    "sumokoin.miner.rocks:5555",
-                    "stellite.miner.rocks:4005",
-                    "loki.miner.rocks:5555",
-                    "saronite.miner.rocks:5555",
-                    "ryo.miner.rocks:5555",
-                    "haven.miner.rocks:4005",
-                    "masari.miner.rocks:5555"
-                };
-            public static string[] address = new string[]
-                {
-                    "dERirD3WyQi4udWH7478H66Ryqn3syEU8bywCQEu3k5ULohQRcz4uoXP12NjmN4STmEDbpHZWqa7bPRiHNFPFgTBPmcBcJSCPAe16v9ceFz27",
-                    "SumipDETyjLYi8rqkmyE9c4SftzYzWPCGA3XvcXbGuBYcqDQJWe8wp8NEwNicFyzZgKTSjCjnpuXTitwn6VdBcFZEFXLcTHGMrpio9Z3Bzwma6",
-                    "SEiStP7SMy1bvjkWc9dd1t2v1Et5q2DrmaqLqFTQQ9H7JKdZuATcPHUbUL3bRjxzxTDYitHsAPqF8EeCLw3bW8ARe8rYc1at38e5hPuG1Pnj2",
-                    "LK8CGQ17G9R3ys3Xf33wCeViD2B95jgdpjAhcRsjuheJ784dumXn7g3RPAzedWpFq364jJKYL9dkQ8mY66sZG9BiCtqCgP7UKp87yTaC9E",
-                    "P2PiphQEwi9Ld4fJiSJ7badzM9it8boTeXFStL5jbSiKVprzXp2ngYqS19TCgwaGU2iU1WSHzJEayHv1k5fAsVs4HsSEBA5ibh92SmhDUDYGn",
-                    "SumipDETyjLYi8rqkmyE9c4SftzYzWPCGA3XvcXbGuBYcqDQJWe8wp8NEwNicFyzZgKTSjCjnpuXTitwn6VdBcFZEFXLcTgndowUG3B8AQrygV",
-                    "hvi1aCqoAZF19J8pijvqnrUkeAeP8Rvr4XyfDMGJcarhbL15KgYKM1hN7kiHMu3fer5k8JJ8YRLKCahDKFgLFgJMYAfnFbkERic2irNC1zEup",
-                    "5t5mEm254JNJ9HqRjY9vCiTE8aZALHX3v8TqhyQ3TTF9VHKZQXkRYjPDweT9kK4rJw7dDLtZXGjav2z9y24vXCdRc3AszuV5ApF8Kapsvn"
-                };
-            public static string[] hashrate = new string[]
-            {
-                "850", //v7
-                "850",
-                "850",
-                "850", //heavy
-                "850",
-                "850",
-                "850",
-                "1600", //light
+            public static double mostProfitableCoinProfit = 0;
 
-            };
+            public static string[] coinName = new string[0];
+            public static string[] coinTicker = new string[0];
+            public static string[] coinAlgo = new string[0];
+            
+            // all 9 algo options
+            public static double[] coinAlgoHash = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+            //public static double[] coinAlgoHash = new double[] { 0, 0, 1456.72, 0, 4198, 4179, 1975, 1440, 3689 };
+
+            public static string[] coinPool = new string[0];
+            public static string[] coinAddress = new string[0];
+            public static double[] profit = new double[0]; //number of coins
             public static ProcessStartInfo startInfo = new ProcessStartInfo();
             public static Process exeProcess;
+
             public static ChromeDriver chrome = new ChromeDriver();
             public static int counter = 0;
         }
@@ -225,41 +458,32 @@ namespace Donjornight_Autominer
         static void GetCurrentProfit()
         {
 
-            //hashrates
-            string cn = "7";
-            string fast = "14";
-            string heavy = "7";
-            string lite = "14";
-            string cnv7 = "7";
+            Array.Resize(ref Globals.profit, Globals.coinName.Length);
 
-
-            //Cookie ck = new Cookie("estimateHashrate", "2");
-            //chrome.Manage().Cookies.AddCookie(ck);
-
-            if (Globals.mostProfitableCoin == -1)
+            try
             {
-                Globals.chrome.Navigate().GoToUrl("https://miner.rocks/");
-                Globals.chrome.ExecuteScript("window.localStorage.setItem('estimateHashrate', '" + cn + "');");
-                Globals.chrome.ExecuteScript("window.localStorage.setItem('estimateHashrateFast', '" + fast + "');");
-                Globals.chrome.ExecuteScript("window.localStorage.setItem('estimateHashrateHeavy', '" + heavy + "');");
-                Globals.chrome.ExecuteScript("window.localStorage.setItem('estimateHashrateLiteV7', '" + lite + "');");
-                Globals.chrome.ExecuteScript("window.localStorage.setItem('estimateHashrateV7', '" + cnv7 + "');");
-                Globals.chrome.Navigate().GoToUrl("https://miner.rocks/");
+                if (Globals.mostProfitableCoin == -1)
+                {
+                    Globals.chrome.Navigate().GoToUrl("https://cryptoknight.cc/");
+                }
+            }
+            catch
+            {
 
             }
+                
+           
 
             bool loaded = false;
             while (loaded == false)
             {
-                string jq = Globals.chrome.ExecuteScript("return jQuery.active").ToString();
                 string rs = Globals.chrome.ExecuteScript("return document.readyState").ToString();
-                if (jq == "1" & rs == "complete")
+                if (rs == "complete")
                 {
                     loaded = true;
                 }
-
-
             }
+
 
             string source = Globals.chrome.PageSource;
             string a = "return document.body.innerHTML;";
@@ -269,36 +493,50 @@ namespace Donjornight_Autominer
             doc.LoadHtml(strDTSource);
 
             var nodes = doc.DocumentNode.SelectNodes("//table//tr");
+            var headnodes = doc.DocumentNode.SelectNodes("//table//thead//tr");
             var table = new DataTable("MyTable");
 
             //var headers = nodes[0]
             //    .Elements("th")
             //    .Select(th => th.InnerText.Trim());
-            //foreach (var header in headers)
-            //{
-            //    table.Columns.Add(header);
 
-            //
-            for (int i = 0; i < 15; i++)
+            var headers = headnodes[0]
+                .Elements("td")
+                .Select(td => td.InnerText.Trim());
+
+
+            foreach (var header in headers)
             {
-                table.Columns.Add(i.ToString());
+                table.Columns.Add(header.ToString().Replace("&nbsp;", ""));
             }
 
+
+            //for (int i = 0; i < 15; i++)
+            //{
+            //    table.Columns.Add(i.ToString());
+            //}
+
             var iRow = 0;
-            var rows = nodes.Skip(1).Select(tr => tr
+            var rows = nodes.Skip(2).Select(tr => tr
                 .Elements("td")
                 .Select(td => td.InnerText.Trim())
                 .ToArray());
             foreach (var row in rows)
             {
                 table.Rows.Add(row);
-                string currentCoin = table.Rows[iRow]["12"].ToString();
-                string currentCoinProfit = table.Rows[iRow]["14"].ToString();
 
-                int i = Array.IndexOf(Globals.coins, currentCoin);
-                if (i != -1)
+                string currentCoin = table.Rows[iRow]["Coin"].ToString();
+                string currentCoinProfit = table.Rows[iRow]["KH/s/day"].ToString();
+
+                if (currentCoinProfit != "") //issue with last row..
                 {
-                    Globals.profit[i] = Convert.ToDouble(currentCoinProfit.Substring(1, currentCoinProfit.Length - 1));
+                    currentCoin = currentCoin.Replace("&nbsp;", "");
+                    currentCoinProfit = currentCoinProfit.Substring(0, currentCoinProfit.Length - 2);
+                    int i = Array.IndexOf(Globals.coinName, currentCoin);
+                    if (i != -1)
+                    {
+                        Globals.profit[i] = Convert.ToDouble(currentCoinProfit);
+                    }
                 }
 
                 iRow++;
@@ -314,46 +552,206 @@ namespace Donjornight_Autominer
             ManagementObjectSearcher objvide = new ManagementObjectSearcher("select * from Win32_VideoController");
             foreach (ManagementObject obj in objvide.Get())
             {
-                gpu = gpu + gpucount + ",";
-                gpucount++;
+                var gpuname = obj["VideoProcessor"];
+                if (obj["VideoProcessor"].ToString().Contains("Intel"))
+                {
+                    //intel = not gpu
+                }
+                else
+                {
+                    gpu = gpu + gpucount + ",";
+                    gpucount++;
+
+                }
 
             }
 
-            // because rig has intel..
-            //gpu = gpu.Substring(0, gpu.Length - 2);
+            double diff = Math.Round(Convert.ToDouble(Globals.coinAlgoHash[Convert.ToInt32(Globals.coinAlgo[Globals.mostProfitableCoin])] * gpucount * 30),0);
 
 
-            //Process resetgpu =  Process.Start("resetgpu.bat");
-            //resetgpu.WaitForExit();
+            DateTime lastShareTime = DateTime.Now;
+            double acceptedShares = 0;
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            TimeSpan timeSpan = DateTime.Now - DateTime.Now;
 
-            string ex1 = AppDomain.CurrentDomain.BaseDirectory;
-            //rig
-            double diff = Convert.ToDouble(Globals.hashrate[Globals.mostProfitableCoin]) * (gpucount + 1) * 30;
-
-            //main
-            diff = Convert.ToDouble(Globals.hashrate[Globals.mostProfitableCoin]) * (gpucount + 1) * 30;
-
-            // Use ProcessStartInfo class
-            //ProcessStartInfo startInfo = new ProcessStartInfo();
-            Globals.startInfo.CreateNoWindow = false;
-            Globals.startInfo.UseShellExecute = false;
-            Globals.startInfo.FileName = "cast_xmr-vega.exe";
-            Globals.startInfo.WindowStyle = ProcessWindowStyle.Normal;
-            //startInfo.Arguments = "-f j -o \"" + ex1 + "\" -z 1.0 -s y ";
-            Globals.startInfo.Arguments = "--algo=" + Globals.algo[Globals.mostProfitableCoin] + " -S " + Globals.pool[Globals.mostProfitableCoin] + " -u " + Globals.address[Globals.mostProfitableCoin] + "." + diff.ToString() + " -G " + gpu;
-
-            //reset gpus
-
-            try
+            using (Globals.exeProcess = new Process())
             {
-                Globals.exeProcess = Process.Start(Globals.startInfo);
+                Globals.exeProcess.StartInfo.FileName = "cast_xmr-vega.exe"; ;
+                Globals.exeProcess.StartInfo.Arguments = "--algo=" + Globals.coinAlgo[Globals.mostProfitableCoin] + " -S " + Globals.coinPool[Globals.mostProfitableCoin] + " -u " + Globals.coinAddress[Globals.mostProfitableCoin] + "." + diff.ToString() + " -G " + gpu;
+                Globals.exeProcess.StartInfo.UseShellExecute = false;
+                Globals.exeProcess.StartInfo.RedirectStandardOutput = true;
+                Globals.exeProcess.StartInfo.RedirectStandardError = true;
+                Globals.exeProcess.Start();
+
+                StringBuilder output = new StringBuilder();
+                StringBuilder error = new StringBuilder();
+
+                using (AutoResetEvent outputWaitHandle = new AutoResetEvent(false))
+                using (AutoResetEvent errorWaitHandle = new AutoResetEvent(false))
+                {
+                    try
+                    {
+                        Globals.exeProcess.OutputDataReceived += (sender, e) =>
+                        {
+                            if (e.Data == null)
+                            {
+                                try
+                                {
+                                    outputWaitHandle.Set();
+                                }
+                                catch
+                                {
+
+                                }
+                            }
+                            else
+                            {
+                                //timeSpan = DateTime.Now - lastShareTime;
+                                output.AppendLine(e.Data);
+                                Console.WriteLine(e.Data);
+                                if (e.Data.ToString().Contains("Shares:"))
+                                {
+                                    var start = e.Data.ToString().IndexOf("Shares:") + 7;
+                                    var end = e.Data.ToString().IndexOf("Accepted");
+                                    double currentShares = Convert.ToDouble(e.Data.ToString().Substring(start, end - 1 - start));
+
+                                    if (currentShares > acceptedShares)
+                                    {
+                                        lastShareTime = DateTime.Now;
+                                    }
+
+                                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                                    Console.WriteLine("");
+                                    Console.WriteLine("     Detected share submitted");
+                                    Console.WriteLine("     Current Shares:" + currentShares);
+                                    Console.WriteLine("     Accepted Shares:" + acceptedShares);
+                                    Console.WriteLine("     Last Share time:" + lastShareTime);
+                                    Console.WriteLine("");
+                                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                                   
+                                    acceptedShares = currentShares;
+
+                                }
+                            }
+                        };
+                        Globals.exeProcess.ErrorDataReceived += (sender, e) =>
+                        {
+                            try
+                            {
+                                if (e.Data == null)
+                                {
+
+                                    errorWaitHandle.Set();
+                                }
+                                else
+                                {
+                                    error.AppendLine(e.Data);
+                                }
+                            }
+                            catch
+                            {
+
+                            }
+
+                        };
+
+
+                        Globals.exeProcess.BeginOutputReadLine();
+                        Globals.exeProcess.BeginErrorReadLine();
+
+                        
+                        //try
+                        //{
+                        //    timeSpan = DateTime.Now - lastShareTime;
+                        //}
+                        //catch
+                        //{
+                        //    timeSpan = DateTime.Now - DateTime.Now;
+                        //}
+
+
+                        while (timeSpan.TotalMinutes < 5)
+                        {
+                            Thread.Sleep(60000);
+                            timeSpan = DateTime.Now - lastShareTime;
+                        }
+
+
+                        if (timeSpan.TotalMinutes > 5)
+                        {
+                            Console.ForegroundColor = ConsoleColor.DarkRed;
+                            Console.WriteLine();
+                            Console.WriteLine("         !!ERROR!! NO SHARES IN 5 MINUTES - Killing app starting again");
+                            Console.WriteLine();
+                            Console.ForegroundColor = ConsoleColor.DarkGray;
+                            Globals.exeProcess.Kill();
+                            Globals.currentlyMining = -1;
+                            Benchmark();
+                            Go();
+
+                        }
+
+                        if (Globals.exeProcess.WaitForExit(15) &&
+                            outputWaitHandle.WaitOne(120) &&
+                            errorWaitHandle.WaitOne(120))
+                        {
+                            // Process completed. Check process.ExitCode here.
+                        }
+                        else
+                        {
+                            // Timed out.
+                        }
+                    }
+
+                    catch
+                    {
+
+                    }
+                }
+
             }
-            catch
+
+
+        }
+        static void RestartGPUs()
+        {
+
+            //Need user input and UAC interaction. Leaving for now
+            Console.ForegroundColor = ConsoleColor.DarkMagenta;
+            Console.WriteLine();
+            Console.WriteLine("         Restarting GPUs");
+            Console.WriteLine();
+            Console.ForegroundColor = ConsoleColor.White;
+
+            int gpucount = 0;
+            string gpu = "";
+            ManagementObjectSearcher objvide = new ManagementObjectSearcher("select * from Win32_VideoController");
+            foreach (ManagementObject obj in objvide.Get())
             {
-                // Log error.
+                var gpuname = obj["VideoProcessor"];
+                if (obj["VideoProcessor"].ToString().Contains("Intel"))
+                {
+                    //intel = not gpu
+                }
+                else
+                {
+                    gpu = gpu + gpucount + ",";
+                    gpucount++;
+
+                }
+
+            }
+
+            using (Process process = new Process())
+            {
+                process.StartInfo.FileName = "switch-radeon-gpu.exe";
+                process.StartInfo.Arguments = "-G " + gpu + " restart";
+                process.StartInfo.UseShellExecute = false;
+                process.Start();
+
+
             }
 
         }
-
     }
 }
