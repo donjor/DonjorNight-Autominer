@@ -216,7 +216,7 @@ namespace Donjornight_Autominer
 
                                                 Console.WriteLine("");
                                                 Console.ForegroundColor = ConsoleColor.DarkCyan;
-                                                Console.WriteLine("     " + hashCount + "/5 Captured Hashrates | " + Math.Round(runtime.TotalSeconds, 0) + "/45 secs | Algo: " + i + " - AVERAGE HASHRATE: " + hash + " H/s");
+                                                Console.WriteLine("     " + hashCount + "/5 Captured Hashrates | " + Math.Round(runtime.TotalSeconds, 0) + "/45 secs | Algo: " + i + ": " + Globals.coinAlgoName[i] + " - AVERAGE HASHRATE: " + hash + " H/s");
                                                 Console.ForegroundColor = ConsoleColor.DarkGray;
                                                 Console.WriteLine("");
                                                 if (hashCount > 4 * gpucount && runtime.TotalSeconds > 45)
@@ -375,7 +375,7 @@ namespace Donjornight_Autominer
 
                     //string print = "     " + Globals.coinName[coinCount] + " Daily Profit: $" + coinProfit;
 
-                    Console.WriteLine("     " + Globals.coinName[coinCount] + " Daily Profit: \t \t $" + Math.Round(coinProfit, 2) + " \t (" + algoHash + " H/s)");
+                    Console.WriteLine("     " + Globals.coinName[coinCount] + " Daily Profit: \t $" + Math.Round(coinProfit, 2) + " \t (" + algoHash + " H/s) " + Globals.coinAlgoName[algo]);
 
                     int MPC = Globals.mostProfitableCoin;
 
@@ -396,8 +396,8 @@ namespace Donjornight_Autominer
             Console.ForegroundColor = ConsoleColor.DarkGreen;
             //print out nonsense
             Console.WriteLine();
-            Console.WriteLine("     Most Profitable Coin: \t \t " + Globals.coinName[Globals.mostProfitableCoin]);
-            Console.WriteLine("     Daily Profit: \t \t \t $" + Globals.mostProfitableCoinProfit);
+            Console.WriteLine("     Most Profitable Coin: \t " + Globals.coinName[Globals.mostProfitableCoin]);
+            Console.WriteLine("     Daily Profit: \t \t $" + Globals.mostProfitableCoinProfit);
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.White;
 
@@ -500,6 +500,7 @@ namespace Donjornight_Autominer
             
             // all 9 algo options
             public static double[] coinAlgoHash = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+            public static string[] coinAlgoName = new string[] { "CryptoNight",  "CryptoNightV7", "CryptoNight-Heavy", "CryptoNight-Lite", "CryptoNightV7-Lite", "CryptoNightIPBC-Lite/TUBE-Heavy", "CryptoNightXTL", "CryptoNightXHV-Heavy", "CryptoNight-Fast" };
             //public static double[] coinAlgoHash = new double[] { 0, 0, 1456.72, 0, 4198, 4179, 1975, 1440, 3689 };
 
             public static string[] coinPool = new string[0];
