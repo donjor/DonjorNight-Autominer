@@ -1,0 +1,13 @@
+C:\Users\jordo\Source\Repos\Donjornight-Autominer\Donjornight-Autominer\bin\Release\Donjornight-Autominer.exe.config
+C:\Users\jordo\Source\Repos\Donjornight-Autominer\Donjornight-Autominer\bin\Release\Donjornight-Autominer.exe
+C:\Users\jordo\Source\Repos\Donjornight-Autominer\Donjornight-Autominer\bin\Release\Donjornight-Autominer.pdb
+C:\Users\jordo\Source\Repos\Donjornight-Autominer\Donjornight-Autominer\bin\Release\HtmlAgilityPack.dll
+C:\Users\jordo\Source\Repos\Donjornight-Autominer\Donjornight-Autominer\bin\Release\WebDriver.dll
+C:\Users\jordo\Source\Repos\Donjornight-Autominer\Donjornight-Autominer\bin\Release\HtmlAgilityPack.pdb
+C:\Users\jordo\Source\Repos\Donjornight-Autominer\Donjornight-Autominer\bin\Release\HtmlAgilityPack.xml
+C:\Users\jordo\Source\Repos\Donjornight-Autominer\Donjornight-Autominer\bin\Release\WebDriver.xml
+C:\Users\jordo\Source\Repos\Donjornight-Autominer\Donjornight-Autominer\obj\Release\Donjornight-Autominer.csprojAssemblyReference.cache
+C:\Users\jordo\Source\Repos\Donjornight-Autominer\Donjornight-Autominer\obj\Release\Donjornight-Autominer.csproj.CoreCompileInputs.cache
+C:\Users\jordo\Source\Repos\Donjornight-Autominer\Donjornight-Autominer\obj\Release\Donjornight-Autominer.csproj.CopyComplete
+C:\Users\jordo\Source\Repos\Donjornight-Autominer\Donjornight-Autominer\obj\Release\Donjornight-Autominer.exe
+C:\Users\jordo\Source\Repos\Donjornight-Autominer\Donjornight-Autominer\obj\Release\Donjornight-Autominer.pdb
