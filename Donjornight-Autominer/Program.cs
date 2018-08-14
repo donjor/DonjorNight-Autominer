@@ -421,13 +421,14 @@ namespace Donjornight_Autominer
 
             //int currentAlgo = Convert.ToInt32(Globals.coinAlgo[Globals.currentlyMining]);
 
-
+            //sndkjhskdjsdkjshdjhksd
             else if ((Globals.profit[Globals.currentlyMining] * Globals.coinAlgoHash[Convert.ToInt32(Globals.coinAlgo[Globals.currentlyMining])]) / 1000 * 1.2 < Globals.mostProfitableCoinProfit)
             {
                 Console.WriteLine("**************************************************************");
                 Console.WriteLine("");
                 Console.ForegroundColor = ConsoleColor.DarkMagenta;
-                Console.WriteLine("     SWITCHING EARLY > " + Globals.profit[Globals.mostProfitableCoin] / Globals.profit[Globals.currentlyMining] + " % PROFIT!");
+                //Console.WriteLine("     SWITCHING EARLY > " + Globals.profit[Globals.mostProfitableCoin] / Globals.profit[Globals.currentlyMining] + " % PROFIT!");
+                Console.WriteLine("     SWITCHING EARLY > " + ((Globals.mostProfitableCoinProfit / (Globals.profit[Globals.currentlyMining] * Globals.coinAlgoHash[Convert.ToInt32(Globals.coinAlgo[Globals.currentlyMining])]) / 1000) - 100 + " % PROFIT!"));
                 Console.WriteLine("");
                 Console.WriteLine("     Current Mining Profit: $" + Globals.profit[Globals.currentlyMining] * Globals.coinAlgoHash[Convert.ToInt32(Globals.coinAlgo[Globals.currentlyMining])] / 1000);
                 Console.WriteLine("     Most Profitable Coin Profit: $" + Globals.mostProfitableCoinProfit);
