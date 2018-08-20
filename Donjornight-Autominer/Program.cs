@@ -366,7 +366,7 @@ namespace Donjornight_Autominer
             try
             {
                 TimeSpan ts = DateTime.Now - Globals.lastShareTime;
-                if (ts.Minutes > 5)
+                if (ts.Minutes > 5 && runtime.Minutes > 5)
                 {
                     Console.ForegroundColor = ConsoleColor.DarkRed;
                     Console.WriteLine();
@@ -376,6 +376,8 @@ namespace Donjornight_Autominer
 
                     Globals.exeProcess.Kill();
                     Globals.currentlyMining = -1;
+                    Benchmark();
+                    Go();
                 }
             }
             catch(Exception e)
@@ -740,9 +742,6 @@ namespace Donjornight_Autominer
 
 
             TimeSpan runtime = DateTime.Now - DateTime.Now;
-            
-
-            
             Globals.lastShareTime = DateTime.Now;
             //DateTime lastShareTime = DateTime.Now;
 
