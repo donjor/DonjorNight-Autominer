@@ -83,7 +83,6 @@ namespace Donjornight_Autominer
 
         static void Benchmark()
         {
-
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("**************************************************************");
             Console.WriteLine("");
@@ -95,6 +94,7 @@ namespace Donjornight_Autominer
 
             //Go through each algo
             //Array.Resize(ref Globals.coinAlgoHash, Globals.coinName.Length);
+            Globals.chrome.Manage().Window.Minimize();
 
             var coincount = 0;
 
@@ -259,6 +259,14 @@ namespace Donjornight_Autominer
                                         {
                                             kill = true;
                                         }
+                                        else if (runtime.TotalSeconds > 120 && hash > 0)
+                                        {
+                                            kill = true;
+                                        }
+                                        else if (runtime.TotalSeconds > 240)
+                                        {
+                                            kill = true;
+                                        }
                                     }
                                 };
                                 process.ErrorDataReceived += (sender, e) =>
@@ -337,6 +345,8 @@ namespace Donjornight_Autominer
         // Specify what you want to happen when the Elapsed event is raised.
         private static void OnTimedEvent(object source, ElapsedEventArgs e)
         {
+           
+
             Go();
         }
         static void Go()
@@ -353,45 +363,93 @@ namespace Donjornight_Autominer
                 runtime = DateTime.Now - DateTime.Now;
             }
 
+            try
+            {
+                TimeSpan ts = DateTime.Now - Globals.lastShareTime;
+                if (ts.Minutes > 5)
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkRed;
+                    Console.WriteLine();
+                    Console.WriteLine("         Error - No shares detected, cast xmr likely crashed");
+                    Console.WriteLine();
+                    Console.ForegroundColor = ConsoleColor.White;
+
+                    Globals.exeProcess.Kill();
+                    Globals.currentlyMining = -1;
+                }
+            }
+            catch(Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.DarkRed;
+                Console.WriteLine();
+                Console.WriteLine("         Error - 377:" + e.ToString());
+                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+            
+
+
             GetCurrentProfit();
+
 
             int coinCount = 0;
             //determine most profitable coin
             Console.WriteLine("");
-
-            foreach (double coinProfitPerKH in Globals.profit)
+            try
             {
+
+
+                foreach (double coinProfitPerKH in Globals.profit)
+                {
+                    if (Globals.mostProfitableCoin == -1)
+                    {
+                        Globals.mostProfitableCoin = 0;
+                    }
+                    try
+                    {
+                        double coinProfit = 0;
+                        int algo = Convert.ToInt32(Globals.coinAlgo[coinCount]);
+                        double algoHash = Globals.coinAlgoHash[algo];
+
+                        coinProfit = (coinProfitPerKH * algoHash) / 1000;
+
+                        //string print = "     " + Globals.coinName[coinCount] + " Daily Profit: $" + coinProfit;
+
+                        Console.WriteLine("     " + Globals.coinName[coinCount] + " Daily Profit: \t $" + Math.Round(coinProfit, 2) + " \t (" + algoHash + " H/s) " + Globals.coinAlgoName[algo]);
+
+                        int MPC = Globals.mostProfitableCoin;
+
+                        if (Math.Round(coinProfit, 2) > Globals.mostProfitableCoinProfit)
+                        {
+                            Globals.mostProfitableCoin = coinCount;
+                            Globals.mostProfitableCoinProfit = Math.Round(coinProfit, 2);
+                        }
+
+                    }
+                    catch
+                    {
+                        Console.WriteLine("     !ERROR!  - Can't get profit for " + Globals.coinName[coinCount]);
+                    }
+                    coinCount++;
+                }
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.DarkRed;
+                Console.WriteLine();
+                Console.WriteLine("         Can't determine the most profitable coins:" + e.ToString());
+                
+
                 if (Globals.mostProfitableCoin == -1)
                 {
+                    Console.WriteLine("         Overriding profitability - setting most profitable coin to index 0:");
                     Globals.mostProfitableCoin = 0;
                 }
-                try
-                {
-                    double coinProfit = 0;
-                    int algo = Convert.ToInt32(Globals.coinAlgo[coinCount]);
-                    double algoHash = Globals.coinAlgoHash[algo];
 
-                    coinProfit = (coinProfitPerKH * algoHash) / 1000;
-
-                    //string print = "     " + Globals.coinName[coinCount] + " Daily Profit: $" + coinProfit;
-
-                    Console.WriteLine("     " + Globals.coinName[coinCount] + " Daily Profit: \t $" + Math.Round(coinProfit, 2) + " \t (" + algoHash + " H/s) " + Globals.coinAlgoName[algo]);
-
-                    int MPC = Globals.mostProfitableCoin;
-
-                    if (Math.Round(coinProfit, 2) > Globals.mostProfitableCoinProfit)
-                    {
-                        Globals.mostProfitableCoin = coinCount;
-                        Globals.mostProfitableCoinProfit = Math.Round(coinProfit,2);
-                    }
-
-                }
-                catch
-                {
-                    Console.WriteLine("     !ERROR!  - Can't get profit for " + Globals.coinName[coinCount]);
-                }
-                coinCount++;
+                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.White;
             }
+
 
             Console.ForegroundColor = ConsoleColor.DarkGreen;
             //print out nonsense
@@ -511,10 +569,13 @@ namespace Donjornight_Autominer
 
             public static ChromeDriver chrome = new ChromeDriver();
             public static int counter = 0;
+            public static DateTime lastShareTime = DateTime.Now;
         }
 
         static void GetCurrentProfit()
         {
+
+            
 
             Array.Resize(ref Globals.profit, Globals.coinName.Length);
 
@@ -525,80 +586,131 @@ namespace Donjornight_Autominer
                     Globals.chrome.Navigate().GoToUrl("https://cryptoknight.cc/");
                 }
             }
-            catch
+            catch (Exception e)
             {
+                Console.ForegroundColor = ConsoleColor.DarkRed;
+                Console.WriteLine();
+                Console.WriteLine("         Error - Couldn't load webpage: Attempting to restart" + e.ToString());
+                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.White;
 
-            }
-                
-           
-
-            bool loaded = false;
-            while (loaded == false)
-            {
-                string rs = Globals.chrome.ExecuteScript("return document.readyState").ToString();
-                if (rs == "complete")
+                try
                 {
-                    loaded = true;
+                    Globals.chrome.Quit();
+                    Globals.chrome = new ChromeDriver();
+                    Globals.chrome.Navigate().GoToUrl("https://cryptoknight.cc/");
+                    Globals.chrome.Manage().Window.Maximize();
+                }
+                catch (Exception e2)
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkRed;
+                    Console.WriteLine();
+                    Console.WriteLine("         Error - Couldn't load webpage after restarting: " + e2.ToString());
+                    Console.WriteLine();
+                    Console.ForegroundColor = ConsoleColor.White;
+
                 }
             }
 
 
-            string source = Globals.chrome.PageSource;
-            string a = "return document.body.innerHTML;";
-            string strDTSource = Globals.chrome.ExecuteScript(a).ToString();
-
-            var doc = new HtmlDocument();
-            doc.LoadHtml(strDTSource);
-
-            var nodes = doc.DocumentNode.SelectNodes("//table//tr");
-            var headnodes = doc.DocumentNode.SelectNodes("//table//thead//tr");
-            var table = new DataTable("MyTable");
-
-            //var headers = nodes[0]
-            //    .Elements("th")
-            //    .Select(th => th.InnerText.Trim());
-
-            var headers = headnodes[0]
-                .Elements("td")
-                .Select(td => td.InnerText.Trim());
-
-
-            foreach (var header in headers)
+            try
             {
-                table.Columns.Add(header.ToString().Replace("&nbsp;", ""));
-            }
+                bool loaded = false;
+                while (loaded == false)
 
 
-            //for (int i = 0; i < 15; i++)
-            //{
-            //    table.Columns.Add(i.ToString());
-            //}
-
-            var iRow = 0;
-            var rows = nodes.Skip(2).Select(tr => tr
-                .Elements("td")
-                .Select(td => td.InnerText.Trim())
-                .ToArray());
-            foreach (var row in rows)
-            {
-                table.Rows.Add(row);
-
-                string currentCoin = table.Rows[iRow]["Coin"].ToString();
-                string currentCoinProfit = table.Rows[iRow]["KH/s/day"].ToString();
-
-                if (currentCoinProfit != "") //issue with last row..
                 {
-                    currentCoin = currentCoin.Replace("&nbsp;", "");
-                    currentCoinProfit = currentCoinProfit.Substring(0, currentCoinProfit.Length - 2);
-                    int i = Array.IndexOf(Globals.coinName, currentCoin);
-                    if (i != -1)
+                    string rs = Globals.chrome.ExecuteScript("return document.readyState").ToString();
+                    if (rs == "complete")
                     {
-                        Globals.profit[i] = Convert.ToDouble(currentCoinProfit);
+                        loaded = true;
                     }
                 }
-
-                iRow++;
             }
+            catch(Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.DarkRed;
+                Console.WriteLine();
+                Console.WriteLine("         Error - Couldn't finish loading webpage: Attempting to read " + e.ToString());
+                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.White;
+                Globals.chrome.Manage().Window.Maximize();
+            }
+
+
+
+
+            try
+            {
+                string source = Globals.chrome.PageSource;
+                string a = "return document.body.innerHTML;";
+                string strDTSource = Globals.chrome.ExecuteScript(a).ToString();
+
+                var doc = new HtmlDocument();
+                doc.LoadHtml(strDTSource);
+
+                var nodes = doc.DocumentNode.SelectNodes("//table//tr");
+                var headnodes = doc.DocumentNode.SelectNodes("//table//thead//tr");
+                var table = new DataTable("MyTable");
+
+                //var headers = nodes[0]
+                //    .Elements("th")
+                //    .Select(th => th.InnerText.Trim());
+
+                var headers = headnodes[0]
+                    .Elements("td")
+                    .Select(td => td.InnerText.Trim());
+
+
+                foreach (var header in headers)
+                {
+                    table.Columns.Add(header.ToString().Replace("&nbsp;", ""));
+                }
+
+
+                //for (int i = 0; i < 15; i++)
+                //{
+                //    table.Columns.Add(i.ToString());
+                //}
+
+                var iRow = 0;
+                var rows = nodes.Skip(2).Select(tr => tr
+                    .Elements("td")
+                    .Select(td => td.InnerText.Trim())
+                    .ToArray());
+                foreach (var row in rows)
+                {
+                    table.Rows.Add(row);
+
+                    string currentCoin = table.Rows[iRow]["Coin"].ToString();
+                    string currentCoinProfit = table.Rows[iRow]["KH/s/day"].ToString();
+
+                    if (currentCoinProfit != "") //issue with last row..
+                    {
+                        currentCoin = currentCoin.Replace("&nbsp;", "");
+                        currentCoinProfit = currentCoinProfit.Substring(0, currentCoinProfit.Length - 2);
+                        int i = Array.IndexOf(Globals.coinName, currentCoin);
+                        if (i != -1)
+                        {
+                            Globals.profit[i] = Convert.ToDouble(currentCoinProfit);
+                        }
+                    }
+
+                    iRow++;
+                }
+
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.DarkRed;
+                Console.WriteLine();
+                Console.WriteLine("         Error - Couldn't read table from webpage: " + e.ToString());
+                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+
+            Globals.chrome.Manage().Window.Minimize();
+
 
         }
 
@@ -630,7 +742,10 @@ namespace Donjornight_Autominer
             TimeSpan runtime = DateTime.Now - DateTime.Now;
             
 
-            DateTime lastShareTime = DateTime.Now;
+            
+            Globals.lastShareTime = DateTime.Now;
+            //DateTime lastShareTime = DateTime.Now;
+
             double acceptedShares = 0;
             Console.ForegroundColor = ConsoleColor.DarkGray;
             TimeSpan timeSpan = DateTime.Now - DateTime.Now;
@@ -639,7 +754,7 @@ namespace Donjornight_Autominer
             using (Globals.exeProcess = new Process())
             {
                 Globals.exeProcess.StartInfo.FileName = "cast_xmr-vega.exe"; ;
-                Globals.exeProcess.StartInfo.Arguments = "--algo=" + Globals.coinAlgo[Globals.mostProfitableCoin] + " -S " + Globals.coinPool[Globals.mostProfitableCoin] + " -u " + Globals.coinAddress[Globals.mostProfitableCoin] + "." + diff.ToString() + " -G " + gpu;
+                Globals.exeProcess.StartInfo.Arguments = "--algo=" + Globals.coinAlgo[Globals.mostProfitableCoin] + " -S " + Globals.coinPool[Globals.mostProfitableCoin] + " -u " + Globals.coinAddress[Globals.mostProfitableCoin] + "." + diff.ToString() + " -G " + gpu + "--fastjobswitch --ratewatchdog ";
                 Globals.exeProcess.StartInfo.UseShellExecute = false;
                 Globals.exeProcess.StartInfo.RedirectStandardOutput = true;
                 Globals.exeProcess.StartInfo.RedirectStandardError = true;
@@ -695,7 +810,8 @@ namespace Donjornight_Autominer
 
                                     if (currentShares > acceptedShares)
                                     {
-                                        lastShareTime = DateTime.Now;
+
+                                        Globals.lastShareTime = DateTime.Now;
                                     }
 
 
@@ -739,10 +855,10 @@ namespace Donjornight_Autominer
                         Globals.exeProcess.BeginErrorReadLine();
 
 
-                        while (timeSpan.TotalMinutes < 5)
+                        while (timeSpan.TotalMinutes < 15)
                         {
                             //Thread.Sleep(60000);
-                            timeSpan = DateTime.Now - lastShareTime;
+                            timeSpan = DateTime.Now - Globals.lastShareTime;
                         }
 
 
