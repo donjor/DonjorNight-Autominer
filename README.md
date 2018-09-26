@@ -1,6 +1,24 @@
 # DonjorNight-Autominer
 A mining tool that auto switches to the most profitable coins in the CryptoNight world. Uses cast-xmr. Windows only.
 
+### Auto Restart and monitor:
+
+Run this code as a batch file if you have stablity issues on your rig:
+```
+call:myDosFunc
+
+:myDosFunc
+	START /I DonjorNight-Autominer
+	TIMEOUT 7400
+	TASKKILL /IM DonjorNight-Autominer.exe /F /T
+	TASKKILL /IM chromedriver.exe /F /T
+	TASKKILL /IM cast_xmr-vega.exe /F /T
+	TASKKILL /IM chrome.exe /F /T
+call:myDosFunc
+
+goto:eof
+```
+
 ### How to use:
 Edit the `DonjorNight-Coin.txt` file to set your pools and addresses using the format:
 
