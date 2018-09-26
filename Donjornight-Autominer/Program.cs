@@ -76,7 +76,7 @@ namespace Donjornight_Autominer
             System.Timers.Timer aTimer = new System.Timers.Timer();
             aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
             // Set the Interval to 5 seconds.
-            aTimer.Interval = 60000;
+            aTimer.Interval = 300000;
             aTimer.Enabled = true;
 
         }
@@ -94,7 +94,7 @@ namespace Donjornight_Autominer
 
             //Go through each algo
             //Array.Resize(ref Globals.coinAlgoHash, Globals.coinName.Length);
-            Globals.chrome.Manage().Window.Minimize();
+            //Globals.chrome.Manage().Window.Minimize();
 
             var coincount = 0;
 
@@ -569,24 +569,25 @@ namespace Donjornight_Autominer
             public static ProcessStartInfo startInfo = new ProcessStartInfo();
             public static Process exeProcess;
 
-            public static ChromeDriver chrome = new ChromeDriver();
+            public static ChromeDriver chrome;
             public static int counter = 0;
             public static DateTime lastShareTime = DateTime.Now;
         }
 
         static void GetCurrentProfit()
         {
+            Globals.chrome = new ChromeDriver();
 
-            
+            //Globals.chrome.Navigate().GoToUrl("https://cryptoknight.cc/");
+            Globals.chrome.Manage().Window.Maximize();
 
             Array.Resize(ref Globals.profit, Globals.coinName.Length);
 
             try
             {
-                if (Globals.mostProfitableCoin == -1)
-                {
-                    Globals.chrome.Navigate().GoToUrl("https://cryptoknight.cc/");
-                }
+                
+                 Globals.chrome.Navigate().GoToUrl("https://cryptoknight.cc/");
+                
             }
             catch (Exception e)
             {
@@ -709,9 +710,10 @@ namespace Donjornight_Autominer
                 Console.WriteLine("         Error - Couldn't read table from webpage: " + e.ToString());
                 Console.WriteLine();
                 Console.ForegroundColor = ConsoleColor.White;
+                Go();
             }
 
-            Globals.chrome.Manage().Window.Minimize();
+            Globals.chrome.Quit();
 
 
         }
