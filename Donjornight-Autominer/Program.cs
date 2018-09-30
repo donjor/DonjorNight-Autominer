@@ -945,39 +945,48 @@ namespace Donjornight_Autominer
 
         static void TradeOgre()
         {
-
-            //Get damn apis baby
-            string[] apis = File.ReadAllLines("TradeOgre.txt");
-            var apiCounter = 0;
-
             string apiKey = "";
             string apiSecret = "";
-
-            foreach (var api in apis)
+            //Get damn apis baby
+            try
             {
-                if (api.StartsWith("*"))
+                string[] apis = File.ReadAllLines("TradeOgre.txt");
+                var apiCounter = 0;
+                foreach (var api in apis)
                 {
-                    //ignore
-                }
-                else
-                {
-                    if (apiCounter == 0)
+                    if (api.StartsWith("*") || api.StartsWith("example"))
                     {
-                        apiKey = api;
+                        //ignore
                     }
-                    else if (apiCounter == 1)
+                    else
                     {
-                        apiSecret = api;
+                        if (apiCounter == 0)
+                        {
+                            apiKey = api;
+                        }
+                        else if (apiCounter == 1)
+                        {
+                            apiSecret = api;
+                        }
+                        apiCounter++;
                     }
-                    apiCounter++;
+
                 }
 
             }
+            catch
+            {
+
+            }
+
+           
 
             if (apiKey != "")
             {
                 Console.WriteLine("");
                 Console.WriteLine("TradeOgre Enabled");
+                Console.WriteLine("");
+
 
                 //Cancel all.
 
@@ -1062,6 +1071,7 @@ namespace Donjornight_Autominer
             {
                 Console.WriteLine("");
                 Console.WriteLine("TradeOgre Disabled, No API keys detected");
+                Console.WriteLine("");
             }
         }
 

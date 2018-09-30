@@ -26,3 +26,5 @@ C:\Users\Donjor\Source\Repos\DonjorNight-Autominer\Donjornight-Autominer\obj\Deb
 C:\Users\Donjor\Source\Repos\DonjorNight-Autominer\Donjornight-Autominer\obj\Debug\Donjornight-Autominer.pdb
 C:\Users\Donjor\Source\Repos\DonjorNight-Autominer\Donjornight-Autominer\bin\Debug\Newtonsoft.Json.dll
 C:\Users\Donjor\Source\Repos\DonjorNight-Autominer\Donjornight-Autominer\bin\Debug\Newtonsoft.Json.xml
+C:\Users\jordo\source\repos\Donjornight-Autominer\Donjornight-Autominer\bin\Debug\Newtonsoft.Json.dll
+C:\Users\jordo\source\repos\Donjornight-Autominer\Donjornight-Autominer\bin\Debug\Newtonsoft.Json.xml

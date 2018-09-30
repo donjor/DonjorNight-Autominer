@@ -1,0 +1,5 @@
+*APIKEY
+*APISECRET
+**********************
+exampleapikey2384d8928hf884
+exampleapisecret490thg84928
