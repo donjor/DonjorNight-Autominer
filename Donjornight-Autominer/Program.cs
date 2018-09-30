@@ -12,6 +12,8 @@ using System.IO;
 using System.Management;
 using System.Timers;
 using System.Threading;
+using System.Net;
+using Newtonsoft.Json.Linq;
 
 namespace Donjornight_Autominer
 {
@@ -71,6 +73,7 @@ namespace Donjornight_Autominer
 
                 };
             }
+            TradeOgre();
             Benchmark();
             Go();
             System.Timers.Timer aTimer = new System.Timers.Timer();
@@ -939,5 +942,186 @@ namespace Donjornight_Autominer
             }
 
         }
+
+        static void TradeOgre()
+        {
+
+            //Get damn apis baby
+            string[] apis = File.ReadAllLines("TradeOgre.txt");
+            var apiCounter = 0;
+
+            string apiKey = "";
+            string apiSecret = "";
+
+            foreach (var api in apis)
+            {
+                if (api.StartsWith("*"))
+                {
+                    //ignore
+                }
+                else
+                {
+                    if (apiCounter == 0)
+                    {
+                        apiKey = api;
+                    }
+                    else if (apiCounter == 1)
+                    {
+                        apiSecret = api;
+                    }
+                    apiCounter++;
+                }
+
+            }
+
+            if (apiKey != "")
+            {
+                Console.WriteLine("");
+                Console.WriteLine("TradeOgre Enabled");
+
+                //Cancel all.
+
+                string jsonOrders = POST("https://tradeogre.com/api/v1/account/orders", "", apiKey, apiSecret);
+                //JObject jObjOrders = JObject.Parse(jsonOrders);
+                JArray AOrders = JArray.Parse(jsonOrders);
+
+
+                foreach (var orders in AOrders)
+                {
+                    JToken currentOrder = orders.SelectToken("uuid");
+                    String strCurrentOrder = currentOrder.ToString().Substring(0, currentOrder.ToString().Length);
+                    Console.WriteLine("Canceling old orders");
+                    Console.WriteLine("Canceling: " + strCurrentOrder);
+                    string jsonCancel = POST("https://tradeogre.com/api/v1/order/cancel", "uuid=" + strCurrentOrder, apiKey, apiSecret);
+                    Console.WriteLine(jsonCancel);
+                }
+
+                //Sell
+
+                //Get Current Balances
+                string jsonGet = GET("https://tradeogre.com/api/v1/account/balances", apiKey, apiSecret);
+
+                JObject jObject = JObject.Parse(jsonGet);
+                JToken bal = jObject.SelectToken("balances");
+
+
+                string[] coinName = new string[] { "BTC", "XMR", "XHV", "GRFT", "LOKI", "XRN", "ARQ", "TUBE", "XTL", "MSR" };
+
+                Console.WriteLine("");
+                Console.WriteLine("Getting Balances");
+                foreach (var a in bal)
+                {
+                    string coin = a.ToString().Substring(1, a.ToString().IndexOf(":") - 2);
+                    var i = 0;
+                    foreach (string coins in coinName)
+                    {
+                        if (coin == coins)
+                        {
+
+                            string currentBalance = a.ToString().Substring(a.ToString().IndexOf(":") + 3, 10);
+
+                            Console.WriteLine(coin + ": " + currentBalance);
+
+                            if (Convert.ToDouble(currentBalance) > 0.0001 && coin != "BTC")
+                            {
+                                Console.WriteLine("");
+                                Console.WriteLine("Selling " + coin);
+                                string jsonGetOrderBook = GET("https://tradeogre.com/api/v1/orders/BTC-" + coin, apiKey, apiSecret);
+                                JObject jObjectGetOrderBook = JObject.Parse(jsonGetOrderBook);
+                                JToken sells = jObjectGetOrderBook.SelectToken("sell");
+
+                                string bestsell = sells.First.ToString();
+                                string strBestMoney = bestsell.Substring(1, bestsell.IndexOf(":") - 2);
+                                double bestMoney = Convert.ToDouble(strBestMoney);
+
+                                strBestMoney = Convert.ToString(((bestMoney * 100000000) - 1));
+                                int extraZero = 8 - strBestMoney.Length;
+
+                                for (int ii = 0; ii < extraZero; ii++)
+                                {
+                                    strBestMoney = "0" + strBestMoney;
+
+                                }
+
+                                //convert from sat to btc
+                                strBestMoney = "0." + strBestMoney;
+                                Console.WriteLine("Selling at: " + strBestMoney);
+
+                                string jsonSell = POST("https://tradeogre.com/api/v1/order/sell", "market=btc-" + coin + "&quantity=" + currentBalance + "&price=" + strBestMoney, apiKey, apiSecret);
+                                Console.Write(jsonSell.ToString());
+                                Console.WriteLine("");
+
+                            }
+                        }
+                        i++;
+                    }
+                }
+
+            }
+            else
+            {
+                Console.WriteLine("");
+                Console.WriteLine("TradeOgre Disabled, No API keys detected");
+            }
+        }
+
+        static string GET(string url, string apiKey, string apiSecret)
+        {
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+            //request.Credentials = new System.Net.NetworkCredential(apiKey, apiSecret);
+            //request.Headers.Add("Authorization", "{" + apiKey + "}:{" + apiSecret + "}");
+            string credidentials = apiKey + ":" + apiSecret;
+            request.Headers["Authorization"] = "Basic " + Convert.ToBase64String(Encoding.Default.GetBytes(credidentials));
+
+
+
+            try
+            {
+                WebResponse response = request.GetResponse();
+                using (Stream responseStream = response.GetResponseStream())
+                {
+                    StreamReader reader = new StreamReader(responseStream, System.Text.Encoding.UTF8);
+                    return reader.ReadToEnd();
+                }
+            }
+            catch (WebException ex)
+            {
+                WebResponse errorResponse = ex.Response;
+                using (Stream responseStream = errorResponse.GetResponseStream())
+                {
+                    StreamReader reader = new StreamReader(responseStream, System.Text.Encoding.GetEncoding("utf-8"));
+                    String errorText = reader.ReadToEnd();
+                    // log errorText
+                }
+                throw;
+            }
+        }
+
+        static string POST(string url, string jsonContent, string apiKey, string apiSecret)
+        {
+
+
+            var request = (HttpWebRequest)WebRequest.Create(url);
+            var postData = jsonContent;
+            var data = Encoding.ASCII.GetBytes(postData);
+
+            request.Method = "POST";
+            request.ContentType = "application/x-www-form-urlencoded";
+            request.ContentLength = data.Length;
+
+            string credidentials = apiKey + ":" + apiSecret;
+            request.Headers["Authorization"] = "Basic " + Convert.ToBase64String(Encoding.Default.GetBytes(credidentials));
+
+            using (var stream = request.GetRequestStream())
+            {
+                stream.Write(data, 0, data.Length);
+            }
+
+            var response = (HttpWebResponse)request.GetResponse();
+            var responseString = new StreamReader(response.GetResponseStream()).ReadToEnd();
+            return responseString.ToString();
+          
+        }
+
     }
 }
