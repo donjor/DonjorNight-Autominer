@@ -1013,56 +1013,42 @@ namespace Donjornight_Autominer
                 JObject jObject = JObject.Parse(jsonGet);
                 JToken bal = jObject.SelectToken("balances");
 
-
-                string[] coinName = new string[] { "BTC", "XMR", "XHV", "GRFT", "LOKI", "XRN", "ARQ", "TUBE", "XTL", "MSR" };
-
                 Console.WriteLine("");
                 Console.WriteLine("Getting Balances");
-                foreach (var a in bal)
+                foreach (var coinBal in bal)
                 {
-                    string coin = a.ToString().Substring(1, a.ToString().IndexOf(":") - 2);
-                    var i = 0;
-                    foreach (string coins in coinName)
+                    string coin = coinBal.ToString().Substring(1, coinBal.ToString().IndexOf(":") - 2);
+                    string currentBalance = coinBal.ToString().Substring(coinBal.ToString().IndexOf(":") + 3, 10);
+                    Console.WriteLine(coin + ": " + currentBalance);
+
+                    if (Convert.ToDouble(currentBalance) > 0.0001 && coin.ToString() != "BTC")
                     {
-                        if (coin == coins)
+                        Console.WriteLine("");
+                        Console.WriteLine("Selling " + coin);
+                        string jsonGetOrderBook = GET("https://tradeogre.com/api/v1/orders/BTC-" + coin.ToString(), apiKey, apiSecret);
+                        JObject jObjectGetOrderBook = JObject.Parse(jsonGetOrderBook);
+                        JToken sells = jObjectGetOrderBook.SelectToken("sell");
+
+                        string bestsell = sells.First.ToString();
+                        string strBestMoney = bestsell.Substring(1, bestsell.IndexOf(":") - 2);
+                        double bestMoney = Convert.ToDouble(strBestMoney);
+
+                        strBestMoney = Convert.ToString(((bestMoney * 100000000) - 1));
+                        int extraZero = 8 - strBestMoney.Length;
+
+                        for (int ii = 0; ii < extraZero; ii++)
                         {
+                            strBestMoney = "0" + strBestMoney;
 
-                            string currentBalance = a.ToString().Substring(a.ToString().IndexOf(":") + 3, 10);
-
-                            Console.WriteLine(coin + ": " + currentBalance);
-
-                            if (Convert.ToDouble(currentBalance) > 0.0001 && coin != "BTC")
-                            {
-                                Console.WriteLine("");
-                                Console.WriteLine("Selling " + coin);
-                                string jsonGetOrderBook = GET("https://tradeogre.com/api/v1/orders/BTC-" + coin, apiKey, apiSecret);
-                                JObject jObjectGetOrderBook = JObject.Parse(jsonGetOrderBook);
-                                JToken sells = jObjectGetOrderBook.SelectToken("sell");
-
-                                string bestsell = sells.First.ToString();
-                                string strBestMoney = bestsell.Substring(1, bestsell.IndexOf(":") - 2);
-                                double bestMoney = Convert.ToDouble(strBestMoney);
-
-                                strBestMoney = Convert.ToString(((bestMoney * 100000000) - 1));
-                                int extraZero = 8 - strBestMoney.Length;
-
-                                for (int ii = 0; ii < extraZero; ii++)
-                                {
-                                    strBestMoney = "0" + strBestMoney;
-
-                                }
-
-                                //convert from sat to btc
-                                strBestMoney = "0." + strBestMoney;
-                                Console.WriteLine("Selling at: " + strBestMoney);
-
-                                string jsonSell = POST("https://tradeogre.com/api/v1/order/sell", "market=btc-" + coin + "&quantity=" + currentBalance + "&price=" + strBestMoney, apiKey, apiSecret);
-                                Console.Write(jsonSell.ToString());
-                                Console.WriteLine("");
-
-                            }
                         }
-                        i++;
+
+                        //convert from sat to btc
+                        strBestMoney = "0." + strBestMoney;
+                        Console.WriteLine("Selling at: " + strBestMoney);
+
+                        string jsonSell = POST("https://tradeogre.com/api/v1/order/sell", "market=btc-" + coin + "&quantity=" + currentBalance + "&price=" + strBestMoney, apiKey, apiSecret);
+                        Console.Write(jsonSell.ToString());
+                        Console.WriteLine("");
                     }
                 }
 
