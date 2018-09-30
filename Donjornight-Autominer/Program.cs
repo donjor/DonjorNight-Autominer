@@ -78,8 +78,8 @@ namespace Donjornight_Autominer
             Go();
             System.Timers.Timer aTimer = new System.Timers.Timer();
             aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
-            // Set the Interval to 5 seconds.
-            aTimer.Interval = 300000;
+            // Set the Interval to 15 Mins
+            aTimer.Interval = 900000;
             aTimer.Enabled = true;
 
         }
