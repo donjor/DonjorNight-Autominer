@@ -90,12 +90,12 @@ namespace Donjornight_Autominer
                 Benchmark();
             }
             GetCurrentProfit();
-            Go();
             System.Timers.Timer aTimer = new System.Timers.Timer();
             aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
             // Set the Interval to 5 Mins
             aTimer.Interval = 300000;
             aTimer.Enabled = true;
+            Go();
 
         }
 
@@ -382,9 +382,14 @@ namespace Donjornight_Autominer
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("**************************************************************");
 
+            System.Timers.Timer aTimer = new System.Timers.Timer();
+            aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
+            // Set the Interval to 5 Mins
+            aTimer.Interval = 300000;
+            aTimer.Enabled = true;
+
             TradeOgre();
             GetCurrentProfit();
-            Go();
         }
         static void Go()
         {
