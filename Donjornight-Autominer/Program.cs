@@ -74,7 +74,21 @@ namespace Donjornight_Autominer
                 };
             }
             TradeOgre();
-            Benchmark();
+
+            if ((File.Exists("Benchmark.txt")))
+            {
+                string[] benchmarks = File.ReadAllLines("Benchmark.txt");
+                var ii = 0;
+                foreach (var hash in benchmarks)
+                {
+                    Globals.coinAlgoHash[ii] = Convert.ToDouble(hash);
+                    ii++;
+                }
+            }
+            else
+            {
+                Benchmark();
+            }
             Go();
             System.Timers.Timer aTimer = new System.Timers.Timer();
             aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
@@ -107,8 +121,8 @@ namespace Donjornight_Autominer
 
 
 
-                if (Globals.coinAlgoHash[i] == 0)
-                {
+                //if (Globals.coinAlgoHash[i] == 0)
+                //{
                     //Not benchmarked
                     
                     Console.ForegroundColor = ConsoleColor.DarkGreen;
@@ -337,11 +351,21 @@ namespace Donjornight_Autominer
 
 
 
-                }
+               
                 coincount++;
             }
 
 
+            //Save the benchmark
+
+            String[] s = new String[Globals.coinAlgoHash.Length];
+            var iCount = 0;
+            foreach (var hash in Globals.coinAlgoHash)
+            {
+                s[iCount] = hash.ToString();
+                iCount++;
+            }
+            System.IO.File.WriteAllLines("Benchmark.txt", s);
 
         }
 
@@ -828,6 +852,29 @@ namespace Donjornight_Autominer
                                     Console.ForegroundColor = ConsoleColor.DarkGray;
                                    
                                     acceptedShares = currentShares;
+
+                                    //Compare to benchmarked rate
+                                    start = e.Data.ToString().IndexOf("Hash Rate Avg:") + 15;
+                                    end = e.Data.ToString().IndexOf("/s");
+                                    double currentHash = Convert.ToDouble(e.Data.ToString().Substring(start, end - 2 - start));
+                                    double benchmarkedhash = Math.Round(Globals.coinAlgoHash[Convert.ToInt32(Globals.coinAlgo[Globals.currentlyMining])], 2);
+                                    if (currentHash * 1.05 < benchmarkedhash && currentShares > 8 || currentHash * 0.9 > benchmarkedhash && currentShares > 8)
+                                    //if (currentHash * 0.5 < benchmarkedhash)
+                                    {
+
+                                        Console.WriteLine("");
+                                        Console.ForegroundColor = ConsoleColor.DarkRed;
+                                        Console.WriteLine("          Benchmarked Hashrate: " + benchmarkedhash + " H/s ");
+                                        Console.WriteLine("          Current Hashrate: " + currentHash + " H/s ");
+                                        Console.WriteLine("");
+                                        Console.WriteLine("          Rebenchmarking because values are too different after 20 shares");
+                                        Console.ForegroundColor = ConsoleColor.DarkGray;
+
+                                        Globals.exeProcess.Kill();
+                                        Globals.currentlyMining = -1;
+                                        Benchmark();
+                                        Go();
+                                    }
 
                                 }
                             }
