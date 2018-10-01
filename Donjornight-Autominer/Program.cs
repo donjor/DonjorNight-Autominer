@@ -89,11 +89,12 @@ namespace Donjornight_Autominer
             {
                 Benchmark();
             }
+            GetCurrentProfit();
             Go();
             System.Timers.Timer aTimer = new System.Timers.Timer();
             aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
-            // Set the Interval to 15 Mins
-            aTimer.Interval = 900000;
+            // Set the Interval to 5 Mins
+            aTimer.Interval = 300000;
             aTimer.Enabled = true;
 
         }
@@ -372,7 +373,17 @@ namespace Donjornight_Autominer
         // Specify what you want to happen when the Elapsed event is raised.
         private static void OnTimedEvent(object source, ElapsedEventArgs e)
         {
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("**************************************************************");
+            Console.WriteLine("");
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
+            Console.WriteLine("     Timed Event Fired - Selling Coins on TradeOgre (If available), Getting latest profit info");
+            Console.WriteLine("");
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("**************************************************************");
+
             TradeOgre();
+            GetCurrentProfit();
             Go();
         }
         static void Go()
@@ -417,7 +428,7 @@ namespace Donjornight_Autominer
             
 
 
-            GetCurrentProfit();
+            //removed currentprofit
 
 
             int coinCount = 0;
