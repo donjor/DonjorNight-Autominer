@@ -348,8 +348,7 @@ namespace Donjornight_Autominer
         // Specify what you want to happen when the Elapsed event is raised.
         private static void OnTimedEvent(object source, ElapsedEventArgs e)
         {
-           
-
+            TradeOgre();
             Go();
         }
         static void Go()
