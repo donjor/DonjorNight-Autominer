@@ -258,12 +258,12 @@ namespace Donjornight_Autominer
                                                 
                                                 Console.WriteLine("");
                                                 Console.ForegroundColor = ConsoleColor.DarkCyan;
-                                                Console.WriteLine("     Captured Hashrates: " + Math.Round(runtime.TotalSeconds,0) + "/45 secs | " + Math.Round((currentHash / hash * 100 - 100),1) + "% hash increase - target < 1% | Algo: " + i + " - AVERAGE HASHRATE: " + currentHash + " H/s");
+                                                Console.WriteLine("     Captured Hashrates: " + Math.Round(runtime.TotalSeconds,0) + "/90 secs | " + Math.Round((currentHash / hash * 100 - 100),1) + "% hash increase - target < 1% | Algo: " + i + " - AVERAGE HASHRATE: " + currentHash + " H/s");
                                                 Console.ForegroundColor = ConsoleColor.DarkGray;
                                                 Console.WriteLine("");
 
 
-                                                if (hashCount > 2 && (currentHash / hash < 1.001) && runtime.TotalSeconds > 45 && (currentHash / hash > 0.99))
+                                                if (hashCount > 2 && (currentHash / hash < 1.001) && runtime.TotalSeconds > 90 && (currentHash / hash > 0.99))
                                                 {
                                                     hash = currentHash;
                                                     kill = true;
