@@ -961,10 +961,9 @@ namespace Donjornight_Autominer
                             Console.WriteLine("         !!ERROR!! NO SHARES IN 15 MINUTES - Killing app starting again");
                             Console.WriteLine();
                             Console.ForegroundColor = ConsoleColor.DarkGray;
-                            Globals.exeProcess.Kill();
-                            Globals.currentlyMining = -1;
-                            Benchmark();
-                            Go();
+
+                            Process.Start(System.AppDomain.CurrentDomain.FriendlyName);
+                            Environment.Exit(0);
 
                         }         
 
