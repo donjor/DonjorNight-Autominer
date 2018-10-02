@@ -110,6 +110,8 @@ namespace Donjornight_Autominer
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("**************************************************************");
 
+            Globals.currentlyBenchmarking = true;
+
             //Go through each algo
             //Array.Resize(ref Globals.coinAlgoHash, Globals.coinName.Length);
             //Globals.chrome.Manage().Window.Minimize();
@@ -367,31 +369,36 @@ namespace Donjornight_Autominer
                 iCount++;
             }
             System.IO.File.WriteAllLines("Benchmark.txt", s);
+            Globals.currentlyBenchmarking = false;
 
         }
 
         // Specify what you want to happen when the Elapsed event is raised.
         private static void OnTimedEvent(object source, ElapsedEventArgs e)
         {
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine("**************************************************************");
-            Console.WriteLine("");
-            Console.ForegroundColor = ConsoleColor.DarkCyan;
-            Console.WriteLine("     Timed Event Fired - Selling Coins on TradeOgre (If available), Getting latest profit info");
-            Console.WriteLine("");
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine("**************************************************************");
+            if (Globals.currentlyBenchmarking == true)
+            {
 
-            //System.Timers.Timer aTimer = new System.Timers.Timer();
-            //aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
-            //// Set the Interval to 5 Mins
-            //aTimer.Interval = 300000;
-            //aTimer.Enabled = true;
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("**************************************************************");
+                Console.WriteLine("");
+                Console.ForegroundColor = ConsoleColor.DarkCyan;
+                Console.WriteLine("     Timed Event Fired - Selling Coins on TradeOgre (If available), Getting latest profit info");
+                Console.WriteLine("");
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("**************************************************************");
 
-            TradeOgre();
-            GetCurrentProfit();
-            Go();
-           
+                //System.Timers.Timer aTimer = new System.Timers.Timer();
+                //aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
+                //// Set the Interval to 5 Mins
+                //aTimer.Interval = 300000;
+                //aTimer.Enabled = true;
+
+                TradeOgre();
+                GetCurrentProfit();
+                Go();
+
+            }
         }
         static void Go()
         {
@@ -595,6 +602,7 @@ namespace Donjornight_Autominer
         public static class Globals
         {
             public static int currentlyMining = -1;
+            public static Boolean currentlyBenchmarking = false;
             public static int mostProfitableCoin = -1;
             public static double mostProfitableCoinProfit = 0;
 
