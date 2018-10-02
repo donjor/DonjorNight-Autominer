@@ -258,12 +258,12 @@ namespace Donjornight_Autominer
                                                 
                                                 Console.WriteLine("");
                                                 Console.ForegroundColor = ConsoleColor.DarkCyan;
-                                                Console.WriteLine("     Captured Hashrates: " + Math.Round(runtime.TotalSeconds,0) + "/90 secs | " + Math.Round((currentHash / hash * 100 - 100),1) + "% hash increase - target < 1% | Algo: " + i + " - AVERAGE HASHRATE: " + currentHash + " H/s");
+                                                Console.WriteLine("     Captured Hashrates: " + Math.Round(runtime.TotalSeconds,0) + "/90 secs | " + Math.Round((currentHash / hash * 100 - 100),1) + "% hash increase - target < 0.1% | Algo: " + i + " - AVERAGE HASHRATE: " + currentHash + " H/s");
                                                 Console.ForegroundColor = ConsoleColor.DarkGray;
                                                 Console.WriteLine("");
 
 
-                                                if (hashCount > 2 && (currentHash / hash < 1.001) && runtime.TotalSeconds > 90 && (currentHash / hash > 0.99))
+                                                if (hashCount > 2 && (currentHash / hash < 1.001) && runtime.TotalSeconds > 90 && (currentHash / hash > 0.997))
                                                 {
                                                     hash = currentHash;
                                                     kill = true;
@@ -277,11 +277,11 @@ namespace Donjornight_Autominer
                                         {
                                             kill = true;
                                         }
-                                        else if (runtime.TotalSeconds > 120 && hash > 0)
+                                        else if (runtime.TotalSeconds > 240 && hash > 0)
                                         {
                                             kill = true;
                                         }
-                                        else if (runtime.TotalSeconds > 240)
+                                        else if (runtime.TotalSeconds > 480)
                                         {
                                             kill = true;
                                         }
@@ -382,14 +382,16 @@ namespace Donjornight_Autominer
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("**************************************************************");
 
-            System.Timers.Timer aTimer = new System.Timers.Timer();
-            aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
-            // Set the Interval to 5 Mins
-            aTimer.Interval = 300000;
-            aTimer.Enabled = true;
+            //System.Timers.Timer aTimer = new System.Timers.Timer();
+            //aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
+            //// Set the Interval to 5 Mins
+            //aTimer.Interval = 300000;
+            //aTimer.Enabled = true;
 
             TradeOgre();
             GetCurrentProfit();
+            Go();
+           
         }
         static void Go()
         {
@@ -618,17 +620,30 @@ namespace Donjornight_Autominer
 
         static void GetCurrentProfit()
         {
-            Globals.chrome = new ChromeDriver();
+           
 
             //Globals.chrome.Navigate().GoToUrl("https://cryptoknight.cc/");
-            Globals.chrome.Manage().Window.Maximize();
+          
 
             Array.Resize(ref Globals.profit, Globals.coinName.Length);
 
             try
             {
-                
-                 Globals.chrome.Navigate().GoToUrl("https://cryptoknight.cc/");
+                string id = Globals.chrome.SessionId.ToString();
+            }
+            catch
+            {
+                Globals.chrome = new ChromeDriver();
+            }
+
+            try
+            {
+                if (Globals.chrome.Url != "https://cryptoknight.cc/")
+                {
+                    Globals.chrome.Manage().Window.Maximize();
+                    Globals.chrome.Navigate().GoToUrl("https://cryptoknight.cc/");
+                    
+                }
                 
             }
             catch (Exception e)
@@ -661,7 +676,9 @@ namespace Donjornight_Autominer
             try
             {
                 bool loaded = false;
+                Globals.chrome.Manage().Window.Maximize();
                 while (loaded == false)
+
 
 
                 {
@@ -755,7 +772,8 @@ namespace Donjornight_Autominer
                 Go();
             }
 
-            Globals.chrome.Quit();
+            //Globals.chrome.Quit();
+            Globals.chrome.Manage().Window.Minimize();
 
 
         }
